@@ -6,10 +6,10 @@
     tools:context=".SearchActivity">
 
     <fragment
-        android:name="com.udacity.gladed.spotifystreamer.SearchArtistFragment"
-        android:id="@+id/searchArtistFragment"
+        android:name="com.udacity.gladed.spotifystreamer.ui.TrackListFragment"
+        android:id="@+id/trackListFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout="@layout/search_artist_fragment" />
+        tools:layout="@layout/fragment_image_list" />
 
 </LinearLayout>

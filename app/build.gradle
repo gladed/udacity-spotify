@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.udacity.gladed.spotifystreamer"
-        minSdkVersion 15
+        minSdkVersion 18
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
@@ -22,12 +22,20 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
+    // gson for serialization
+    compile 'com.google.code.gson:gson:2.3.1'
+
     compile 'com.android.support:design:22.2.0'
     compile 'com.android.support:recyclerview-v7:22.2.0'
 
+    // Spotify library and its dependencies
     compile(name:'spotify-web-api-android-0.1.0', ext:'aar')
-    compile 'com.squareup.picasso:picasso:2.5.2'
-    compile 'com.android.support:design:22.2.0'
-    compile 'com.squareup.retrofit:retrofit:1.9.0'  // Uses this to create RESTful Requests
-    compile 'com.squareup.okhttp:okhttp:2.2.0'  // Uses this to create HTTP connections
+    compile 'com.squareup.retrofit:retrofit:1.9.0'
+    compile 'com.squareup.okhttp:okhttp:2.2.0'
+
+    // Image processing
+    compile 'com.github.bumptech.glide:glide:3.6.0'
+
+    // Result caching
+    compile 'com.jakewharton:disklrucache:2.0.2'
 }
