@@ -35,23 +35,14 @@ public class MusicService extends Service {
 
     private final IBinder mBinder = new MusicServiceBinder();
     final SpotifyService mSpotify = new SpotifyApi().getService();
-    List<FindArtistsListener> mFindArtistsListeners = new ArrayList<>();
-    List<FindTracksListener>mFindTracksListeners = new ArrayList<>();
+    List<MusicServiceListener> mListeners = new ArrayList<>();
 
-    public void addFindArtistsListener(FindArtistsListener listener) {
-        mFindArtistsListeners.add(listener);
+    public void addListener(MusicServiceListener listener) {
+        mListeners.add(listener);
     }
 
-    public void removeFindArtistsListener(FindArtistsListener listener) {
-        mFindArtistsListeners.remove(listener);
-    }
-
-    public void addFindTracksListener(FindTracksListener listener) {
-        mFindTracksListeners.add(listener);
-    }
-
-    public void removeFindTracksListener(FindTracksListener listener) {
-        mFindTracksListeners.remove(listener);
+    public void removeListener(MusicServiceListener listener) {
+        mListeners.remove(listener);
     }
 
     /**
@@ -67,28 +58,21 @@ public class MusicService extends Service {
         mSpotify.getArtistTopTrack(artist.id, options, new Callback<Tracks>() {
             @Override
             public void success(final Tracks tracks, Response response) {
-                Ui.runOnUiThread(MusicService.this, new Runnable() {
+                Log.i(TAG, "For artist " + artist.name + " found " + tracks.tracks.size() + " tracks");
+                withListeners(new ListenerAction() {
                     @Override
-                    public void run() {
-                        List<FindTracksListener> toNotify = new ArrayList<>(mFindTracksListeners);
-                        for (FindTracksListener listener : toNotify) {
-                            listener.onTracksFound(artist, tracks.tracks, null);
-                        }
-
+                    public void run(MusicServiceListener listener) {
+                        listener.onTracksFound(artist, tracks.tracks, null);
                     }
                 });
             }
 
             @Override
             public void failure(final RetrofitError error) {
-                Ui.runOnUiThread(MusicService.this, new Runnable() {
+                withListeners(new ListenerAction() {
                     @Override
-                    public void run() {
-                        List<FindTracksListener> toNotify = new ArrayList<>(mFindTracksListeners);
-                        for (FindTracksListener listener : toNotify) {
-                            listener.onTracksFound(artist, null, error.toString());
-                        }
-
+                    public void run(MusicServiceListener listener) {
+                        listener.onTracksFound(artist, null, error.toString());
                     }
                 });
             }
@@ -104,27 +88,40 @@ public class MusicService extends Service {
         mSpotify.searchArtists(searchString, new Callback<ArtistsPager>() {
             @Override
             public void success(final ArtistsPager artistsPager, Response response) {
-                Ui.runOnUiThread(MusicService.this, new Runnable() {
-                    public void run() {
-                        List<FindArtistsListener> toNotify = new ArrayList<>(mFindArtistsListeners);
-                        Log.i(TAG, "For search " + searchString + " found " + artistsPager.artists.items.size() + " artists");
-                        for (FindArtistsListener listener : toNotify) {
-                            listener.onArtistsFound(searchString, artistsPager.artists.items, null);
-                        }
+                Log.i(TAG, "For search " + searchString + " found " + artistsPager.artists.items.size() + " artists");
+                withListeners(new ListenerAction() {
+                    @Override
+                    public void run(MusicServiceListener listener) {
+                        listener.onArtistsFound(searchString, artistsPager.artists.items, null);
                     }
                 });
             }
 
             @Override
             public void failure(final RetrofitError error) {
-                Ui.runOnUiThread(MusicService.this, new Runnable() {
-                    public void run() {
-                        List<FindArtistsListener> toNotify = new ArrayList<>(mFindArtistsListeners);
-                        for (FindArtistsListener listener : toNotify) {
-                            listener.onArtistsFound(searchString, null, error.toString());
-                        }
+                withListeners(new ListenerAction() {
+                    @Override
+                    public void run(MusicServiceListener listener) {
+                        listener.onArtistsFound(searchString, null, error.toString());
                     }
                 });
+            }
+        });
+    }
+
+    private interface ListenerAction {
+        void run(MusicServiceListener listener);
+    }
+
+    /** Runs something on all listeners on the UI thread */
+    private void withListeners(final ListenerAction doThis) {
+        Ui.runOnUiThread(MusicService.this, new Runnable() {
+            @Override
+            public void run() {
+                List<MusicServiceListener> toNotify = new ArrayList<>(mListeners);
+                for (MusicServiceListener listener : toNotify) {
+                    doThis.run(listener);
+                }
             }
         });
     }
@@ -140,8 +137,8 @@ public class MusicService extends Service {
         return mBinder;
     }
 
-    /** Can be used by clients to manage connection to this service */
-    public static class Connection implements ServiceConnection {
+    /** Can be used by clients to manage the connection and receive callbacks from this service */
+    public static class Connection implements ServiceConnection, MusicServiceListener  {
         private MusicService mService;
         private Context mContext;
         private List<Runnable> mWhenConnected = new ArrayList<>();
@@ -149,6 +146,7 @@ public class MusicService extends Service {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             mService = ((MusicServiceBinder)iBinder).getService();
+            getService().addListener(this);
 
             // Run all outstanding requests
             while(mWhenConnected.size() > 0) {
@@ -175,6 +173,7 @@ public class MusicService extends Service {
 
         /** Unbind from the service */
         public void unbind() {
+            getService().removeListener(this);
             mContext.unbindService(this);
         }
 
@@ -188,14 +187,20 @@ public class MusicService extends Service {
                 mWhenConnected.add(runnable);
             }
         }
+
+        @Override
+        public void onArtistsFound(String search, List<Artist> artists, String error) {
+
+        }
+
+        @Override
+        public void onTracksFound(Artist artist, List<Track> artists, String error) {
+
+        }
     }
 
-    public interface FindArtistsListener {
+    public interface MusicServiceListener {
         void onArtistsFound(String search, List<Artist> artists, String error);
-    }
-
-    public interface FindTracksListener {
         void onTracksFound(Artist artist, List<Track> artists, String error);
     }
-
 }

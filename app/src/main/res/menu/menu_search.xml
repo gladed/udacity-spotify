@@ -3,13 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools" tools:context=".SearchActivity">
 
     <item
-        android:id="@+id/settings"
-        android:title="@string/settings"
-        app:showAsAction="never"/>
-    <item
         android:id="@+id/artistSearch"
         android:title="@string/artistSearch"
         android:icon="@drawable/ic_search_white_24dp"
         app:showAsAction="ifRoom"
         app:actionViewClass="android.support.v7.widget.SearchView" />
+    <item
+        android:id="@+id/settings"
+        android:title="@string/settings"
+        app:showAsAction="never"/>
 </menu>

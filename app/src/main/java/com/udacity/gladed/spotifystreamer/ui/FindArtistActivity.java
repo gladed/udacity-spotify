@@ -6,9 +6,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Menu;
+import android.view.Window;
 
 import com.udacity.gladed.spotifystreamer.R;
 import com.udacity.gladed.spotifystreamer.service.MusicService;
+
+import java.util.List;
 
 import kaaes.spotify.webapi.android.models.Artist;
 
@@ -19,7 +22,7 @@ public class FindArtistActivity extends AppCompatActivity implements ArtistListF
 
     private final MusicService.Connection mMusicServiceConnection = new MusicServiceConnection();
     private SearchView mArtistSearch;
-    private String mStoredQuery;
+    private String mLatestQuery;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +47,7 @@ public class FindArtistActivity extends AppCompatActivity implements ArtistListF
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        mStoredQuery = savedInstanceState.getString(KEY_SEARCH);
+        mLatestQuery = savedInstanceState.getString(KEY_SEARCH);
     }
 
     @Override
@@ -57,8 +60,8 @@ public class FindArtistActivity extends AppCompatActivity implements ArtistListF
         mArtistSearch.requestFocusFromTouch();
 
         // Recall the stored query text from before
-        if (mStoredQuery != null) {
-            mArtistSearch.setQuery(mStoredQuery, false);
+        if (mLatestQuery != null) {
+            mArtistSearch.setQuery(mLatestQuery, false);
         }
 
         mArtistSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -67,6 +70,9 @@ public class FindArtistActivity extends AppCompatActivity implements ArtistListF
             public boolean onQueryTextSubmit(final String query) {
                 // NOTE: Android may call this twice in rapid succession
                 Log.i(TAG, "onQueryTextSubmit '" + query + "'");
+                mArtistSearch.clearFocus();
+                mLatestQuery = query;
+
                 mMusicServiceConnection.whenConnected(new Runnable() {
                     @Override
                     public void run() {
@@ -89,6 +95,5 @@ public class FindArtistActivity extends AppCompatActivity implements ArtistListF
         startActivity(SelectTrackActivity.makeIntent(this, artist));
     }
 
-    class MusicServiceConnection extends MusicService.Connection {
-    }
+    class MusicServiceConnection extends MusicService.Connection { }
 }

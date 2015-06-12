@@ -93,7 +93,7 @@ public class ArtistListFragment extends Fragment implements ImageAdapter.ImageIn
         }
     }
 
-    private class MusicServiceConnection extends MusicService.Connection implements MusicService.FindArtistsListener {
+    private class MusicServiceConnection extends MusicService.Connection {
         @Override
         public void onArtistsFound(String search, List<Artist> artists, String error) {
             if (mAdapter == null) return;
@@ -121,18 +121,6 @@ public class ArtistListFragment extends Fragment implements ImageAdapter.ImageIn
                 Ui.toast(getActivity(), getActivity().getString(R.string.noMatchingArtist));
             }
             mAdapter.setImageInfos(infos);
-        }
-
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            super.onServiceConnected(componentName, iBinder);
-            getService().addFindArtistsListener(this);
-        }
-
-        @Override
-        public void unbind() {
-            getService().removeFindArtistsListener(this);
-            super.unbind();
         }
     }
 }

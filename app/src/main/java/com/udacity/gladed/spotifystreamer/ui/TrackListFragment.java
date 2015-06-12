@@ -127,17 +127,17 @@ public class TrackListFragment extends Fragment implements ImageAdapter.ImageInf
     }
 
     /** Connects to the music service and listens for updates to the list of tracks */
-    class MusicServiceConnection extends MusicService.Connection implements MusicService.FindTracksListener {
+    class MusicServiceConnection extends MusicService.Connection {
 
         @Override
         public void onTracksFound(Artist artist, List<Track> tracks, String error) {
-            Log.i(TAG, "For " + artist.name + " found " + tracks.size() + " tracks");
             if (mAdapter == null) return;
 
             if (tracks == null) {
                 Ui.toast(getActivity(), "Could not show tracks for artist: " + error);
                 return;
             }
+            Log.i(TAG, "For " + artist.name + " found " + tracks.size() + " tracks");
 
             List<ImageAdapter.ImageInfo<Track>> infos = new ArrayList<>();
             for (Track track: tracks) {
@@ -150,19 +150,6 @@ public class TrackListFragment extends Fragment implements ImageAdapter.ImageInf
                 }
             }
             mAdapter.setImageInfos(infos);
-            // TODO: If no matches, show different view?
-        }
-
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            super.onServiceConnected(componentName, iBinder);
-            getService().addFindTracksListener(this);
-        }
-
-        @Override
-        public void unbind() {
-            super.unbind();
-            getService().removeFindTracksListener(this);
         }
     }
 
