@@ -33,15 +33,114 @@ public class MusicService extends Service {
     private static final String TAG = "SpotifyService";
     private static final String CountryCode = Locale.getDefault().getCountry();
 
-    public interface FindArtistsListener {
-        void onArtistsFound(String search, List<Artist> artists, String error);
+    private final IBinder mBinder = new MusicServiceBinder();
+    final SpotifyService mSpotify = new SpotifyApi().getService();
+    List<FindArtistsListener> mFindArtistsListeners = new ArrayList<>();
+    List<FindTracksListener>mFindTracksListeners = new ArrayList<>();
+
+    public void addFindArtistsListener(FindArtistsListener listener) {
+        mFindArtistsListeners.add(listener);
     }
 
-    public interface FindTracksListener {
-        void onTracksFound(Artist artist, List<Track> artists, String error);
+    public void removeFindArtistsListener(FindArtistsListener listener) {
+        mFindArtistsListeners.remove(listener);
     }
 
-    /** Can be used to manage a client connection to this service */
+    public void addFindTracksListener(FindTracksListener listener) {
+        mFindTracksListeners.add(listener);
+    }
+
+    public void removeFindTracksListener(FindTracksListener listener) {
+        mFindTracksListeners.remove(listener);
+    }
+
+    /**
+     * Given an artist, looks up the top tracks for that artist
+     */
+    public void findTopTracks(final Artist artist) {
+        /** getArtistTopTrack requires a COUNTRY option so pull this from locale */
+        Map<String, Object> options = new HashMap<String, Object>() {{
+            put(SpotifyService.COUNTRY, CountryCode);
+        }};
+
+        // Note: Could add LRU cache for better performance
+        mSpotify.getArtistTopTrack(artist.id, options, new Callback<Tracks>() {
+            @Override
+            public void success(final Tracks tracks, Response response) {
+                Ui.runOnUiThread(MusicService.this, new Runnable() {
+                    @Override
+                    public void run() {
+                        List<FindTracksListener> toNotify = new ArrayList<>(mFindTracksListeners);
+                        for (FindTracksListener listener : toNotify) {
+                            listener.onTracksFound(artist, tracks.tracks, null);
+                        }
+
+                    }
+                });
+            }
+
+            @Override
+            public void failure(final RetrofitError error) {
+                Ui.runOnUiThread(MusicService.this, new Runnable() {
+                    @Override
+                    public void run() {
+                        List<FindTracksListener> toNotify = new ArrayList<>(mFindTracksListeners);
+                        for (FindTracksListener listener : toNotify) {
+                            listener.onTracksFound(artist, null, error.toString());
+                        }
+
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Requests a search for a given search string, giving results to all ArtistSearchListeners.
+     */
+    public void findArtists(final String searchString) {
+        // Note: Could add LRU cache
+        // Note: Could optimize for many "findArtists" calls (e.g. don't overlap requests)
+        mSpotify.searchArtists(searchString, new Callback<ArtistsPager>() {
+            @Override
+            public void success(final ArtistsPager artistsPager, Response response) {
+                Ui.runOnUiThread(MusicService.this, new Runnable() {
+                    public void run() {
+                        List<FindArtistsListener> toNotify = new ArrayList<>(mFindArtistsListeners);
+                        Log.i(TAG, "For search " + searchString + " found " + artistsPager.artists.items.size() + " artists");
+                        for (FindArtistsListener listener : toNotify) {
+                            listener.onArtistsFound(searchString, artistsPager.artists.items, null);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void failure(final RetrofitError error) {
+                Ui.runOnUiThread(MusicService.this, new Runnable() {
+                    public void run() {
+                        List<FindArtistsListener> toNotify = new ArrayList<>(mFindArtistsListeners);
+                        for (FindArtistsListener listener : toNotify) {
+                            listener.onArtistsFound(searchString, null, error.toString());
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    public class MusicServiceBinder extends Binder {
+        public MusicService getService() {
+            return MusicService.this;
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
+    }
+
+    /** Can be used by clients to manage connection to this service */
     public static class Connection implements ServiceConnection {
         private MusicService mService;
         private Context mContext;
@@ -49,7 +148,7 @@ public class MusicService extends Service {
 
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            mService = ((MusicService.LocalBinder)iBinder).getService();
+            mService = ((MusicServiceBinder)iBinder).getService();
 
             // Run all outstanding requests
             while(mWhenConnected.size() > 0) {
@@ -91,129 +190,12 @@ public class MusicService extends Service {
         }
     }
 
-    private final IBinder mBinder = new LocalBinder();
-    final SpotifyService mSpotify = new SpotifyApi().getService();
-    List<FindArtistsListener> mFindArtistsListeners = new ArrayList<>();
-    List<FindTracksListener>mFindTracksListeners = new ArrayList<>();
-
-    public void addFindArtistsListener(FindArtistsListener listener) {
-        mFindArtistsListeners.add(listener);
+    public interface FindArtistsListener {
+        void onArtistsFound(String search, List<Artist> artists, String error);
     }
 
-    public void removeFindArtistsListener(FindArtistsListener listener) {
-        mFindArtistsListeners.remove(listener);
+    public interface FindTracksListener {
+        void onTracksFound(Artist artist, List<Track> artists, String error);
     }
 
-
-    public void addFindTracksListener(FindTracksListener listener) {
-        mFindTracksListeners.add(listener);
-    }
-
-    public void removeFindTracksListener(FindTracksListener listener) {
-        mFindTracksListeners.remove(listener);
-    }
-
-    /**
-     * Given an artist, looks up the top tracks for that artist
-     */
-    public void findTopTracks(final Artist artist) {
-        /** getArtistTopTrack requires a COUNTRY option so pull this from locale */
-        Map<String, Object> options = new HashMap<String, Object>() {{
-            put(SpotifyService.COUNTRY, CountryCode);
-        }};
-
-        // TODO: Add LRU cache
-        mSpotify.getArtistTopTrack(artist.id, options, new Callback<Tracks>() {
-            @Override
-            public void success(final Tracks tracks, Response response) {
-                Ui.runOnUiThread(MusicService.this, new Runnable() {
-                    @Override
-                    public void run() {
-                        List<FindTracksListener> toNotify = new ArrayList<>(mFindTracksListeners);
-                        for (FindTracksListener listener: toNotify) {
-                            listener.onTracksFound(artist, tracks.tracks, null);
-                        }
-
-                    }
-                });
-            }
-
-            @Override
-            public void failure(final RetrofitError error) {
-                Ui.runOnUiThread(MusicService.this, new Runnable() {
-                    @Override
-                    public void run() {
-                        List<FindTracksListener> toNotify = new ArrayList<>(mFindTracksListeners);
-                        for (FindTracksListener listener : toNotify) {
-                            listener.onTracksFound(artist, null, error.toString());
-                        }
-
-                    }
-                });
-            }
-        });
-    }
-
-    /**
-     * Requests a search for a given search string, giving results to all ArtistSearchListeners.
-     */
-    public void findArtists(final String searchString) {
-        // TODO: Add LRU cache
-        // TODO: Optimize for many "findArtists" calls (e.g. don't overlap requests)
-        mSpotify.searchArtists(searchString, new Callback<ArtistsPager>() {
-            @Override
-            public void success(final ArtistsPager artistsPager, Response response) {
-                Ui.runOnUiThread(MusicService.this, new Runnable() {
-                    public void run() {
-                        List<FindArtistsListener> toNotify = new ArrayList<>(mFindArtistsListeners);
-                        Log.i(TAG, "For search " + searchString + " found " + artistsPager.artists.items.size() + " artists");
-                        for (FindArtistsListener listener : toNotify) {
-                            listener.onArtistsFound(searchString, artistsPager.artists.items, null);
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void failure(final RetrofitError error) {
-                Ui.runOnUiThread(MusicService.this, new Runnable() {
-                    public void run() {
-                        List<FindArtistsListener> toNotify = new ArrayList<>(mFindArtistsListeners);
-                        for (FindArtistsListener listener : toNotify) {
-                            listener.onArtistsFound(searchString, null, error.toString());
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    // How to store artist information in cache...
-//    Log.i(TAG, "Result: " + artistsPager + " on main thread? = " +
-//            (Looper.getMainLooper().getThread() == Thread.currentThread()));
-//
-//    Gson gson = new Gson();
-//
-//    for (Artist artist: artistsPager.artists.items) {
-//        artist = gson.fromJson(gson.toJson(artist), Artist.class);
-//        Log.i(TAG, "Found Artist: " + artist.name);
-//        Log.i(TAG, "As JSON: " + gson.toJson(artist));
-//        for (Image image : artist.images) {
-//            Log.i(TAG, "  image:" + image.url + ", " + image.height + ", " + image.width);
-//        }
-//    }
-//
-
-    // Service boilerplate
-
-    public class LocalBinder extends Binder {
-        public MusicService getService() {
-            return MusicService.this;
-        }
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return mBinder;
-    }
 }

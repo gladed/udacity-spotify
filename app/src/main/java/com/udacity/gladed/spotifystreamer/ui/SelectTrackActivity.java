@@ -1,11 +1,8 @@
 package com.udacity.gladed.spotifystreamer.ui;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -14,11 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.udacity.gladed.spotifystreamer.R;
-import com.udacity.gladed.spotifystreamer.service.MusicService;
 import com.udacity.gladed.spotifystreamer.util.Json;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.Track;

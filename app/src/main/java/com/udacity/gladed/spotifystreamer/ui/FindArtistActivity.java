@@ -1,20 +1,14 @@
 package com.udacity.gladed.spotifystreamer.ui;
 
-import android.content.ComponentName;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.support.v7.app.ActionBar;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 
 import com.udacity.gladed.spotifystreamer.R;
 import com.udacity.gladed.spotifystreamer.service.MusicService;
-import com.udacity.gladed.spotifystreamer.util.Ui;
-
-import java.util.List;
 
 import kaaes.spotify.webapi.android.models.Artist;
 
@@ -48,7 +42,7 @@ public class FindArtistActivity extends AppCompatActivity implements ArtistListF
     }
 
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         mStoredQuery = savedInstanceState.getString(KEY_SEARCH);
     }
@@ -91,26 +85,10 @@ public class FindArtistActivity extends AppCompatActivity implements ArtistListF
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-//        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public void onArtistSelected(Artist artist) {
         startActivity(SelectTrackActivity.makeIntent(this, artist));
     }
 
     class MusicServiceConnection extends MusicService.Connection {
-
     }
 }

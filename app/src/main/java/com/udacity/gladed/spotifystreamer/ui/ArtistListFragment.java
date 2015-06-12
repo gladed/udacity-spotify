@@ -3,19 +3,16 @@ package com.udacity.gladed.spotifystreamer.ui;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.ComponentName;
-import android.content.Context;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.udacity.gladed.spotifystreamer.R;
 import com.udacity.gladed.spotifystreamer.service.MusicService;
-import com.udacity.gladed.spotifystreamer.util.Retainer;
 import com.udacity.gladed.spotifystreamer.util.Ui;
 
 import java.util.ArrayList;

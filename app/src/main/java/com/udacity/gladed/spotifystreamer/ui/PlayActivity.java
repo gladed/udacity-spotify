@@ -40,7 +40,6 @@ public class PlayActivity extends AppCompatActivity {
             actionBar.setSubtitle(artist.name);
         }
 
-        // TODO: Do some glide on the fragment to get the largest track image loaded
         PlayFragment playFragment = (PlayFragment)getFragmentManager().findFragmentById(R.id.fragment);
         playFragment.setInfo(artist, track);
     }

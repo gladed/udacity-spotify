@@ -164,7 +164,7 @@ public class TrackListFragment extends Fragment implements ImageAdapter.ImageInf
             super.unbind();
             getService().removeFindTracksListener(this);
         }
-    };
+    }
 
     /** Activity containing this fragment must implement this interface */
     public interface OnTrackSelectedListener {
