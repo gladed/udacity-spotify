@@ -12,8 +12,7 @@
         <activity
             android:name=".ui.FindArtistActivity"
             android:label="@string/appName"
-            android:launchMode="singleTop"
-            >
+            android:launchMode="singleTop" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -24,7 +23,9 @@
             android:name=".ui.SelectTrackActivity"
             android:label="@string/selectTrack"
             android:parentActivityName=".ui.FindArtistActivity"
+            android:launchMode="singleTop" >
             >
+
             <!-- For 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -37,6 +38,15 @@
             android:enabled="true"
             android:exported="false" >
         </service>
+
+        <activity
+            android:name=".ui.PlayActivity"
+            android:label="@string/title_activity_play"
+            android:parentActivityName=".ui.SelectTrackActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.SelectTrackActivity" />
+        </activity>
     </application>
 
 </manifest>

@@ -27,6 +27,7 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
+/** A service that supplies an interface to the back-end streaming service */
 public class MusicService extends Service {
 
     private static final String TAG = "SpotifyService";
@@ -66,12 +67,14 @@ public class MusicService extends Service {
             return mService;
         }
 
+        /** Initiate a binding to the service */
         public boolean bind(Context context) {
             mContext = context;
             return context.bindService(new Intent(context, MusicService.class),
                     this, Context.BIND_AUTO_CREATE);
         }
 
+        /** Unbind from the service */
         public void unbind() {
             mContext.unbindService(this);
         }
@@ -173,8 +176,14 @@ public class MusicService extends Service {
 
             @Override
             public void failure(final RetrofitError error) {
-                Log.w(TAG, "Failure: " + error);
-                //TODO: Notify failure
+                Ui.runOnUiThread(MusicService.this, new Runnable() {
+                    public void run() {
+                        List<FindArtistsListener> toNotify = new ArrayList<>(mFindArtistsListeners);
+                        for (FindArtistsListener listener : toNotify) {
+                            listener.onArtistsFound(searchString, null, error.toString());
+                        }
+                    }
+                });
             }
         });
     }

@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NavUtils;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -27,6 +28,8 @@ public class SelectTrackActivity extends AppCompatActivity implements TrackListF
     private static final String TAG = "SelectTrackActivity";
     private static final String ARG_ARTIST = "artist";
 
+    private Artist mArtist;
+
     public static Intent makeIntent(Activity from, Artist artist) {
         return new Intent(from, SelectTrackActivity.class)
                 .putExtra(ARG_ARTIST, Json.gson.toJson(artist));
@@ -34,18 +37,22 @@ public class SelectTrackActivity extends AppCompatActivity implements TrackListF
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "onCreate " + this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_track);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
 
-        // Grab the artist out of the intent
-        Artist artist = Json.gson.fromJson(getIntent().getExtras().getString(ARG_ARTIST), Artist.class);
+        mArtist = Json.gson.fromJson(getIntent().getExtras().getString(ARG_ARTIST), Artist.class);
+
+        if (getSupportActionBar() != null) {
+            ActionBar actionBar = getSupportActionBar();
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle(mArtist.name);
+            actionBar.setSubtitle("Top Tracks");
+        }
 
         // Get the tracklist fragment and tell it about the selected artist
         TrackListFragment trackListFragment = (TrackListFragment)getFragmentManager().findFragmentById(R.id.trackListFragment);
-        trackListFragment.setArtist(artist);
+        trackListFragment.setArtist(mArtist);
     }
 
     @Override
@@ -77,7 +84,7 @@ public class SelectTrackActivity extends AppCompatActivity implements TrackListF
 
     @Override
     public void onTrackSelected(Track track) {
-        Log.i(TAG, "A track was selected: " + track.name);
+        startActivity(PlayActivity.makeIntent(this, mArtist, track));
     }
 
 }

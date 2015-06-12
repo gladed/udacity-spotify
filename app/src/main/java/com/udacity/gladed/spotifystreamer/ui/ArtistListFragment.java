@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import com.udacity.gladed.spotifystreamer.R;
 import com.udacity.gladed.spotifystreamer.service.MusicService;
 import com.udacity.gladed.spotifystreamer.util.Retainer;
+import com.udacity.gladed.spotifystreamer.util.Ui;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,6 @@ public class ArtistListFragment extends Fragment implements ImageAdapter.ImageIn
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "onCreate " + this);
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         if (mAdapter == null) {
@@ -49,7 +49,6 @@ public class ArtistListFragment extends Fragment implements ImageAdapter.ImageIn
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.i(TAG, "onCreateView");
         // Inflate the layout for this fragment
         ViewGroup group = (ViewGroup)inflater.inflate(R.layout.fragment_image_list, container, false);
 
@@ -63,16 +62,12 @@ public class ArtistListFragment extends Fragment implements ImageAdapter.ImageIn
 
     @Override
     public void onDestroyView() {
-        Log.i(TAG, "onDestroyView");
-
         super.onDestroyView();
         mAdapter.setImageInfoSelectionListener(null);
     }
 
     @Override
     public void onAttach(Activity activity) {
-        Log.i(TAG, "onAttach");
-
         super.onAttach(activity);
         try {
             mListener = (OnArtistSelectedListener) activity;
@@ -85,8 +80,6 @@ public class ArtistListFragment extends Fragment implements ImageAdapter.ImageIn
 
     @Override
     public void onDetach() {
-        Log.i(TAG, "onDetach");
-
         super.onDetach();
         mListener = null;
         mMusicServiceConnection.unbind();
@@ -109,7 +102,8 @@ public class ArtistListFragment extends Fragment implements ImageAdapter.ImageIn
             if (mAdapter == null) return;
 
             if (artists == null) {
-                // TODO: if error, toast?
+                Ui.toast(getActivity(),
+                        String.format(getActivity().getString(R.string.errorDuringSearch),error));
                 return;
             }
 
@@ -126,8 +120,9 @@ public class ArtistListFragment extends Fragment implements ImageAdapter.ImageIn
                 // Skip artists that don't have photos.
             }
 
-            // TODO: If no matches, show different view?
-
+            if (artists.size() == 0) {
+                Ui.toast(getActivity(), getActivity().getString(R.string.noMatchingArtist));
+            }
             mAdapter.setImageInfos(infos);
         }
 

@@ -104,9 +104,9 @@ public class ImageAdapter<T> extends RecyclerView.Adapter<ImageAdapter.ViewHolde
                         .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                         .centerCrop()
                         .into(mBackground);
+
             }
         }
-
     }
 
     /** Unit of data shared with us, including the underlying data type whatever it is */
